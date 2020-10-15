@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
-from unicoretest.views import Register_user, Login, Get_keys, Logout
+from unicoretest.views import Register_user, Login, Get_keys, Logout, Get_restaurants
 
 
 router = routers.DefaultRouter()
@@ -29,5 +29,5 @@ urlpatterns = [
     path('unicore/api_keys/', Get_keys),
     path('unicore/login/', Login),
     path('unicore/logout/', Logout),
-    # path('unicore/restaurants/', Get_restaurants),
+    path('unicore/restaurants/', Get_restaurants),
 ]

@@ -13,7 +13,7 @@ from datetime import date
 from unicoretest.utils import keys_generator
 
 # Create your views here.
-
+BAD_REQUEST_ERR_MSG = 'Bad request please check your request and try agin!'
 
 @api_view(['POST'])
 def Register_user(request):
@@ -37,9 +37,9 @@ def Register_user(request):
             },
             status=status.HTTP_201_CREATED)
     else:
-        # return JsonResponse({'message': 'Bad request please check your request and try agin!'}, status=status.HTTP_400_BAD_REQUEST)
-        return JsonResponse(user_serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'message': BAD_REQUEST_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST)
+        # return JsonResponse(user_serializer.errors,
+        #                     status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST', 'GET'])
@@ -49,25 +49,27 @@ def Login(request):
     """
     if request.method == 'GET':
         return JsonResponse(
-            {'message': 'You are not connected please logged in and try again!'},
+            {
+                'message': 'You are not connected please logged in and try again!'
+            },
             status=status.HTTP_400_BAD_REQUEST)
-
 
     user_connected = request.user.id
     if user_connected is not None:
         return JsonResponse(
-            {'message': 'User is already connected use api_keys endpoints for get your keys!'},
-            status=status.HTTP_400_BAD_REQUEST)
-    
-    user_credential = JSONParser().parse(request)
-    
-    if (not 'username' in user_credential) or (not 'password' in user_credential):
-        return JsonResponse(
-            {'message': 'Bad request please check your request and try agin!'},
+            {
+                'message': 'User is already connected use api_keys endpoints for get your keys!'
+            },
             status=status.HTTP_400_BAD_REQUEST)
 
-    user = authenticate(username=user_credential['username'],
-                        password=user_credential['password'])
+    user_credential = JSONParser().parse(request)
+
+    if (not 'username' in user_credential) or (not 'password' in user_credential):
+        return JsonResponse(
+            {'message':BAD_REQUEST_ERR_MSG},
+            status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(username=user_credential['username'], password=user_credential['password'])
 
     if user is not None:
 
@@ -83,15 +85,12 @@ def Login(request):
                 "ceated_date": today.strftime("%Y-%m-%d"),
                 "user_id": user.id
             })
-        
+
         if Token_Serializer.is_valid():
             Token_Serializer.save()
 
         else:
-            return JsonResponse(
-                Token_Serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST)
-        
+            return JsonResponse(Token_Serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return JsonResponse(
             {
@@ -105,15 +104,14 @@ def Login(request):
             {'message': 'User not exist. Check your fields and try again!'},
             status=status.HTTP_400_BAD_REQUEST)
 
-
+# For test
 @api_view(['POST'])
 def Logout(request):
     """
     API endpoint that use to logged out user.
     """
     logout(request)
-    return JsonResponse({'message': 'User is logged out successfylly.'},
-                        status=status.HTTP_201_CREATED)
+    return JsonResponse({'message': 'User is logged out successfylly.'}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -125,10 +123,10 @@ def Get_keys(request):
     user = request.user.id
     if user is None:
         return JsonResponse(
-            {'message': 'Bad request please check your request and try agin!'},
+            {'message': BAD_REQUEST_ERR_MSG},
             status=status.HTTP_400_BAD_REQUEST)
 
-    user_tokens = Tokens.objects.filter(user_id = user).order_by('id').reverse()[0]
+    user_tokens = Tokens.objects.filter(user_id=user).order_by('id').reverse()[0]
     token_seria = TokenSerializer(user_tokens)
     if user_tokens is not None:
         return JsonResponse(
@@ -140,8 +138,7 @@ def Get_keys(request):
     else:
 
         return JsonResponse(
-            {'message': 'Bad request please check your request and try agin!'},
-            status=status.HTTP_400_BAD_REQUEST)
+            {'message': BAD_REQUEST_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -149,13 +146,15 @@ def Get_restaurants(request):
     """
     API endpoint that use to get restaurant.
     """
-    if not 'X-Public-Key' in request.headers and not 'X-Secret-Key' in  request.headers:
+    if not 'X-Public-Key' in request.headers or not 'X-Secret-Key' in request.headers:
         return JsonResponse(
-            {'message': 'Permission denied. Check your request and try again.'},
+            {
+                'message': 'Permission denied. Check your request and try again.'
+            },
             status=status.HTTP_400_BAD_REQUEST)
 
     geo_data = JSONParser().parse(request)
-    if not 'lat' in geo_data and not 'lng' in geo_data:
+    if not 'lat' in geo_data or not 'lng' in geo_data:
         return JsonResponse(
             {'message': 'Bad request please check your fields and try agin!'},
             status=status.HTTP_400_BAD_REQUEST)
@@ -163,26 +162,28 @@ def Get_restaurants(request):
     lat = geo_data['lat']
     lng = geo_data['lng']
     public_key = request.headers['X-Public-Key']
-    secret_key = request.headers['X-Secret-Key']
+    private_key = request.headers['X-Secret-Key']
 
-    check_tokens = Tokens.objects.filter(public_key = public_key, token= secret_key).order_by('id').reverse()[0]
+    check_tokens = Tokens.objects.filter(
+        public_key=public_key, token=private_key).order_by('id').reverse()[0]
 
     if check_tokens is not None:
         # review request and integrate get around in 3km radius restaurant
-        restaurant_lists = Restaurants.objects.extra(where=['lat >= %s', 'lng <= %s'], params=[lat, lng])
+        restaurant_lists = Restaurants.objects.extra(
+            where=['lat >= %s', 'lng <= %s'], params=[lat, lng])
 
-        if restaurant_lists is not None:
+        if restaurant_lists is not None and len(restaurant_lists) > 0:
             serialize_lists = RestaurantsSerializer(restaurant_lists, many=True)
-            return JsonResponse(
-                serialize_lists.data,
-                status=status.HTTP_201_CREATED)
-        
+            return JsonResponse(serialize_lists.data,
+                                status=status.HTTP_201_CREATED)
+
         else:
             return JsonResponse(
                 {'message': 'Restaurant not found for your localisation'},
                 status=status.HTTP_201_CREATED)
     else:
         return JsonResponse(
-            {'message': 'Permission denied. Check your request and try again.'},
+            {
+                'message': 'Permission denied. Check your request and try again.'
+            },
             status=status.HTTP_400_BAD_REQUEST)
-    
