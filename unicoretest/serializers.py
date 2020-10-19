@@ -14,7 +14,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tokens
-        fields = ['token', 'public_key', 'ceated_date', 'user_id']
+        fields = ['token', 'public_key', 'created_date', 'user_id']
 
 class RestaurantsSerializer(serializers.ModelSerializer):
     class Meta:

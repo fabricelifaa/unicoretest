@@ -4,7 +4,7 @@ from django.db import models
 class Tokens(models.Model):
     token = models.CharField(max_length=250)
     public_key = models.CharField(max_length=250)
-    ceated_date = models.DateField()
+    created_date = models.DateField()
     user_id = models.IntegerField()
     def __str__(self):
         return self.ceated_date
