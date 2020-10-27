@@ -113,32 +113,32 @@ def Logout(request):
     logout(request)
     return JsonResponse({'message': 'User is logged out successfylly.'}, status=status.HTTP_201_CREATED)
 
+# This route is a trap. User can get only keys when is logged in.
+# @api_view(['GET'])
+# @login_required(login_url='/unicore/login/')
+# def Get_keys(request):
+#     """
+#     API endpoint that use to get user keys.
+#     """
+#     user = request.user.id
+#     if user is None:
+#         return JsonResponse(
+#             {'message': BAD_REQUEST_ERR_MSG},
+#             status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-@login_required(login_url='/unicore/login/')
-def Get_keys(request):
-    """
-    API endpoint that use to get user keys.
-    """
-    user = request.user.id
-    if user is None:
-        return JsonResponse(
-            {'message': BAD_REQUEST_ERR_MSG},
-            status=status.HTTP_400_BAD_REQUEST)
+#     user_tokens = Tokens.objects.filter(user_id=user).order_by('id').reverse()[0]
+#     token_seria = TokenSerializer(user_tokens)
+#     if user_tokens is not None:
+#         return JsonResponse(
+#             {
+#                 'public_key': token_seria.data['public_key'],
+#                 'secret_key': token_seria.data['token']
+#             },
+#             status=status.HTTP_201_CREATED)
+#     else:
 
-    user_tokens = Tokens.objects.filter(user_id=user).order_by('id').reverse()[0]
-    token_seria = TokenSerializer(user_tokens)
-    if user_tokens is not None:
-        return JsonResponse(
-            {
-                'public_key': token_seria.data['public_key'],
-                'secret_key': token_seria.data['token']
-            },
-            status=status.HTTP_201_CREATED)
-    else:
-
-        return JsonResponse(
-            {'message': BAD_REQUEST_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST)
+#         return JsonResponse(
+#             {'message': BAD_REQUEST_ERR_MSG}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
