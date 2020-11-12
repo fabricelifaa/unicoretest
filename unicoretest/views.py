@@ -113,6 +113,7 @@ def Logout(request):
     logout(request)
     return JsonResponse({'message': 'User is logged out successfylly.'}, status=status.HTTP_201_CREATED)
 
+
 # This route is a trap. User can get only keys when is logged in.
 # @api_view(['GET'])
 # @login_required(login_url='/unicore/login/')
